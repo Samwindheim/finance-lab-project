@@ -198,13 +198,13 @@ def _extract_data_from_text(text: str) -> Dict[str, Any]:
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant designed to output JSON."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.0,
+            temperature=1.0,
         )
         response_content = response.choices[0].message.content
         if response_content:
@@ -215,13 +215,14 @@ def _extract_data_from_text(text: str) -> Dict[str, Any]:
         return {}
 
 
-def extract_investor_data(pdf_path: str, verbose: bool = False) -> Dict[str, Any]:
+def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = False) -> Dict[str, Any]:
     """
     Orchestrates the two-stage process: find relevant text in the PDF, then extract data from it.
 
     Args:
         pdf_path: The path to the PDF file.
         verbose: If True, prints a detailed efficiency analysis.
+        debug: If True, prints the raw text that will be sent to the AI.
 
     Returns:
         A dictionary with the extracted data, including investors, source page, and confidence.
@@ -241,6 +242,16 @@ def extract_investor_data(pdf_path: str, verbose: bool = False) -> Dict[str, Any
             print("No relevant keywords found.")
             print("---------------------------")
         return {"investors": [], "source_page": "", "confidence": "none"}
+
+    # Debug: Show the raw text that will be sent to AI
+    if debug:
+        print("=" * 80)
+        print("DEBUG: Raw text extracted by fitz (before AI processing)")
+        print("=" * 80)
+        print(relevant_text)
+        print("=" * 80)
+        print(f"Total characters: {len(relevant_text)}")
+        print("=" * 80)
 
     # --- Stage 2: LLM Extraction ---
     api_start_time = time.time()

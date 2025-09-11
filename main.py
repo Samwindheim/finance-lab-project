@@ -22,6 +22,7 @@ def main():
     parser = argparse.ArgumentParser(description="Extract underwriter and guarantor data from a PDF document.")
     parser.add_argument("pdf_path", type=str, help="The file path or URL to the PDF document.")
     parser.add_argument("--verbose", action="store_true", help="Print a detailed efficiency analysis report.")
+    parser.add_argument("--debug", action="store_true", help="Print the raw text extracted by fitz before AI processing.")
     args = parser.parse_args()
 
     if not os.path.exists(args.pdf_path):
@@ -29,7 +30,7 @@ def main():
         return
 
     # Extract the raw data using the core logic
-    extracted_data = extract_investor_data(args.pdf_path, verbose=args.verbose)
+    extracted_data = extract_investor_data(args.pdf_path, verbose=args.verbose, debug=args.debug)
 
     # Create the metadata object
     meta_info = Meta(
