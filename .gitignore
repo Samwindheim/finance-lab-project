@@ -5,3 +5,5 @@ __pycache__/
 .env
 .cursor
 pdfs/
+instructions.md
+.DS_Store
