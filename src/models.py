@@ -1,9 +1,9 @@
 """
-This module defines the data structures for the application using Pydantic.
+This module defines the Pydantic data models for the application.
 
-These models ensure that the extracted data conforms to a specific, validated
-schema before being output as the final JSON. They provide type hinting,
-validation, and serialization for the investor data.
+These models serve as the "single source of truth" for the output data structure.
+They provide strict type hinting, validation, and serialization, ensuring that
+the final JSON output is always consistent and conforms to the defined schema.
 """
 
 from typing import List, Optional, Union

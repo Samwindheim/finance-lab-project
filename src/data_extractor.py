@@ -1,26 +1,28 @@
 """
-This module contains the core logic for extracting investor data from text.
+This module contains the core logic for AI-powered data extraction.
 
-It implements a two-stage process:
-1.  **Search**: Scans the document text for relevant keywords to find candidate pages.
-2.  **Extract**: Sends the relevant text snippet to the OpenAI API with a detailed
-    prompt to get structured data back.
+It orchestrates the main two-stage RAG pipeline:
+1.  **Retrieval**: Invokes the `pdf_parser` to find and extract relevant tables
+    from the source PDF, which are returned as clean Markdown.
+2.  **Generation**: Constructs a detailed prompt with specific mapping and cleaning
+    rules, then sends the Markdown table(s) to the OpenAI API (gpt-4o) to be
+    converted into a structured JSON format.
 
-It also handles communication with the OpenAI API and shapes the final data output.
+It also calculates a final confidence score based on the completeness of the
+extracted data.
 """
-
 import time
 import os
 import json
 from openai import OpenAI
-from typing import Dict, Any, List, Set, Tuple
+from typing import Dict, Any, List
 
-from src.pdf_parser import extract_text_by_page, get_page_count
+from src.pdf_parser import find_and_extract_tables_as_markdown, get_page_count
 
 
 SEARCH_KEYWORDS = [
-    "teckningsåtagare", "garant", 
-    "åtaganden", "garantiåtaganden", "teckningsåtaganden"
+    "underwriter", "guarantor", "teckningsåtagare", "garant",
+    "commitment", "åtaganden", "garantiåtaganden", "teckningsåtaganden"
 ]
 
 
@@ -36,31 +38,9 @@ def get_openai_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
-def _format_page_numbers(page_numbers: List[int]) -> str:
-    """
-    Formats a list of page numbers into a condensed string (e.g., "11-12").
-    """
-    if not page_numbers:
-        return ""
-    if len(page_numbers) == 1:
-        return str(page_numbers[0])
-    return f"{min(page_numbers)}-{max(page_numbers)}"
-
-
 def _calculate_confidence(investors: List[Dict[str, Any]]) -> str:
     """
     Calculates a confidence score based on the completeness of the extracted data.
-
-    - high: All investors have both amount and percent.
-    - medium: Some investors are missing either an amount or a percent.
-    - low: Some investors are missing both amount and percent.
-    - none: No investors were found.
-
-    Args:
-        investors: The list of extracted investor dictionaries.
-
-    Returns:
-        A string representing the confidence level.
     """
     if not investors:
         return "none"
@@ -79,96 +59,47 @@ def _calculate_confidence(investors: List[Dict[str, Any]]) -> str:
     return "medium" if has_medium_confidence else "high"
 
 
-def _find_relevant_text(pdf_path: str) -> Tuple[str, Set[int]]:
+def create_extraction_prompt(markdown_tables: str) -> str:
     """
-    Scans a PDF for keywords, identifies relevant pages, and returns their combined text
-    with a context window (one page before and one page after).
-
-    Args:
-        pdf_path: The file path to the PDF document.
-
-    Returns:
-        A tuple containing the combined text and a set of the original candidate page numbers.
-    """
-    pages_text: List[Tuple[int, str]] = list(extract_text_by_page(pdf_path))
-    if not pages_text:
-        return "", set()
-
-    candidate_pages = set()
-    for page_num, text in pages_text:
-        found_keywords = {keyword for keyword in SEARCH_KEYWORDS if keyword.lower() in text.lower()}
-        if len(found_keywords) >= 2:
-            candidate_pages.add(page_num)
-
-    if not candidate_pages:
-        # Fallback to the single-keyword search if the stricter search finds nothing
-        for page_num, text in pages_text:
-            if any(keyword.lower() in text.lower() for keyword in SEARCH_KEYWORDS):
-                candidate_pages.add(page_num)
-
-    if not candidate_pages:
-        return "", set()
-
-    # Create a full context window of relevant pages (including one page before and one after the matches)
-    relevant_pages_indices = set()
-    for page_num in sorted(list(candidate_pages)):
-        page_idx = page_num - 1  # convert 1-based page number to 0-based index
-        if page_idx > 0:
-            relevant_pages_indices.add(page_idx - 1)
-        relevant_pages_indices.add(page_idx)
-        if page_idx < len(pages_text) - 1:
-            relevant_pages_indices.add(page_idx + 1)
-
-    # Combine the text from the relevant pages
-    full_text = []
-    for i in sorted(list(relevant_pages_indices)):
-        page_num, text = pages_text[i]
-        full_text.append(f"--- Page {page_num} ---\n{text}")
-
-    return "\n\n".join(full_text), candidate_pages
-
-
-def create_extraction_prompt(text: str) -> str:
-    """
-    Creates the prompt for the OpenAI API to extract investor information.
+    Creates the prompt for the OpenAI API to convert a Markdown table to JSON.
     """
     return f"""
-    You are an expert AI assistant specializing in financial document analysis. Your task is to extract information about underwriters and guarantors from the provided text of a financial memorandum.
+    You are an expert AI assistant specializing in financial data processing. Your task is to convert the following Markdown table(s) into a structured JSON format.
 
     **Definitions:**
     - **Underwriter (Swedish: "teckningsåtagare")**: A person or entity that has committed to underwriting an issue. They are not compensated. Their investor level is always 0.
     - **Guarantor (Swedish: "Garant")**: A person or entity that agrees to sign up for shares if the issue is not filled. They are compensated for this service. Their investor level starts at 1 for the first/lowest guarantee level, 2 for the next, and so on.
+    - **Amount (Swedish: "Belopp")**: The amount in SEK (or other currency) that the investor has committed to underwrite or guarantee.
+    - **Share of the rights issue percentage (Swedish: "Andel av Företrädesemissionen")**: The percentage of the issue that the investor has committed to underwrite or guarantee.
+
+    **Investor Level Mapping:**
+    - Commitments from a "Tecknings-förbindelser" or "Teckningsåtaganden" column are **investor_level 0**.
+    - Commitments from a general "Garantiåtaganden" or "Garantier" column are **investor_level 1**.
+    - Commitments from a "Botten-garantier" column are **investor_level 1**.
+    - Commitments from a "Toppgarantier" column are **investor_level 2**.
+
+    **Data Cleaning Rules (VERY IMPORTANT):**
+    - When extracting numbers for `amount` and `percent`, you MUST clean them into a pure numerical format.
+    - **For `amount`**: Remove all spaces, currency symbols (e.g., "SEK"), and text. If there is a comma decimal, round to the nearest whole number. The final value must be an integer.
+    - **For `percent`**: Remove the percentage sign (`%`). Use a period (`.`) as the decimal separator. The final value must be a float.
 
     **Instructions:**
-    1.  Carefully read the text provided below.
-    2.  Identify all underwriters and guarantors.
-    3.  Extract the following information for each one:
-        - `name` Swedish: "Namn": The full name of the person or entity.
-        - `commitment` Swedish: "Åtagande": The amount in SEK (or other currency) and/or the percentage of the issue. Both should be included if available.
-        - `investor_level`: Assign `0` for underwriters. For guarantors, assign `1` for the primary or "bottom" guarantee level, and increment the number for any subsequent "top" or additional levels.
-    4.  Format the output as a single JSON object. The root of the object should contain a list called `investors`.
-    5.  **Crucially, do not hallucinate or invent any information.** If a piece of data (like a commitment amount or percentage) is not present for an investor, set its value to `null`. If no underwriters or guarantors are found in the text, return an empty `investors` list.
-    6.  The JSON output should only contain the `investors` list. Do not include any other keys at the root level.
-    7. In your final JSON response, also include a key named `source_pages` which is a list of the page numbers (as integers) from which you extracted the investor data. You can identify the page numbers from the `--- Page X ---` markers in the input text.
+    1.  Parse the Markdown table(s) provided below.
+    2.  For each row, create a separate JSON object for each commitment found. A single name can have multiple commitments.
+    3.  Extract the `name`, `commitment`, and determine the `investor_level` using the mapping above.
+    4.  Apply the **Data Cleaning Rules** to all numerical values.
+    5.  The `source_pages` are indicated by the `--- Page X ---` markers. Your JSON response must include a `source_pages` key containing a list of these page numbers.
 
     **Example Output Format:**
     ```json
     {{
-      "source_pages": [7, 8],
+      "source_pages": [11],
       "investors": [
         {{
-          "name": "Investor Name AB",
+          "name": "Tuvedalen Ltd.",
           "commitment": {{
-            "amount": 500000,
-            "percent": 3.5
-          }},
-          "investor_level": 1
-        }},
-        {{
-          "name": "Another Investor",
-          "commitment": {{
-            "amount": null,
-            "percent": 7.6
+            "amount": 1652367,
+            "percent": 9.4
           }},
           "investor_level": 0
         }}
@@ -176,35 +107,29 @@ def create_extraction_prompt(text: str) -> str:
     }}
     ```
 
-    **Text for Analysis:**
+    **Markdown Table(s) for Analysis:**
     ---
-    {text}
+    {markdown_tables}
     ---
     """
 
 
-def _extract_data_from_text(text: str) -> Dict[str, Any]:
+def _extract_data_from_markdown(markdown: str) -> Dict[str, Any]:
     """
-    Uses OpenAI to extract investor data from a given text snippet.
-
-    Args:
-        text: The text content to analyze.
-
-    Returns:
-        A dictionary containing the extracted data. Returns an empty dict if extraction fails.
+    Uses OpenAI to convert a Markdown table string into structured investor data.
     """
     client = get_openai_client()
-    prompt = create_extraction_prompt(text)
+    prompt = create_extraction_prompt(markdown)
 
     try:
         response = client.chat.completions.create(
-            model="gpt-5-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant designed to output JSON."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=1.0,
+            temperature=0.0,
         )
         response_content = response.choices[0].message.content
         if response_content:
@@ -217,61 +142,58 @@ def _extract_data_from_text(text: str) -> Dict[str, Any]:
 
 def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = False) -> Dict[str, Any]:
     """
-    Orchestrates the two-stage process: find relevant text in the PDF, then extract data from it.
-
-    Args:
-        pdf_path: The path to the PDF file.
-        verbose: If True, prints a detailed efficiency analysis.
-        debug: If True, prints the raw text that will be sent to the AI.
-
-    Returns:
-        A dictionary with the extracted data, including investors, source page, and confidence.
+    Orchestrates the two-stage process: find and extract tables, then convert them to JSON.
     """
     metrics = {}
 
-    # --- Stage 1: Fitz Scan ---
+    # --- Stage 1: Fitz Table Scan ---
     scan_start_time = time.time()
-    relevant_text, source_pages_set = _find_relevant_text(pdf_path)
+    markdown_tables = find_and_extract_tables_as_markdown(pdf_path, SEARCH_KEYWORDS)
     metrics["scan_duration"] = time.time() - scan_start_time
 
-    if not relevant_text:
+    if not markdown_tables:
         if verbose:
             print("--- Efficiency Analysis ---")
             print(f"Total pages in document:        {get_page_count(pdf_path)}")
-            print(f"Fitz keyword scan duration:     {metrics['scan_duration']:.2f}s")
-            print("No relevant keywords found.")
+            print(f"Fitz table scan duration:       {metrics['scan_duration']:.2f}s")
+            print("No relevant tables found.")
             print("---------------------------")
         return {"investors": [], "source_page": "", "confidence": "none"}
 
-    # Debug: Show the raw text that will be sent to AI
+    combined_markdown = "\n\n".join(markdown_tables)
+
+    # Debug: Show the raw markdown that will be sent to AI
     if debug:
         print("=" * 80)
-        print("DEBUG: Raw text extracted by fitz (before AI processing)")
+        print("DEBUG: Markdown table(s) extracted by fitz (before AI processing)")
         print("=" * 80)
-        print(relevant_text)
+        print(combined_markdown)
         print("=" * 80)
-        print(f"Total characters: {len(relevant_text)}")
+        print(f"Total characters: {len(combined_markdown)}")
         print("=" * 80)
 
-    # --- Stage 2: LLM Extraction ---
+    # --- Stage 2: LLM Conversion ---
     api_start_time = time.time()
-    extracted_data = _extract_data_from_text(relevant_text)
+    extracted_data = _extract_data_from_markdown(combined_markdown)
     metrics["api_call_duration"] = time.time() - api_start_time
 
     investors = extracted_data.get("investors", [])
     source_pages = extracted_data.get("source_pages", [])
 
+    # Verbose: print the efficiency analysis
     if verbose:
         print("--- Efficiency Analysis ---")
         print(f"Total pages in document:        {get_page_count(pdf_path)}")
-        print(f"Fitz keyword scan duration:     {metrics['scan_duration']:.2f}s")
-        print(f"Candidate pages found:          {sorted(list(source_pages_set))}")
-        print(f"LLM payload character count:    {len(relevant_text)}")
+        print(f"Fitz table scan duration:       {metrics['scan_duration']:.2f}s")
+        print(f"LLM payload character count:    {len(combined_markdown)}")
         print(f"LLM API call duration:          {metrics['api_call_duration']:.2f}s")
         print("---------------------------")
 
+    # Pydantic doesn't have a clean way to format a list of numbers, so do it manually
+    page_str = ",".join(map(str, sorted(source_pages)))
+
     return {
         "investors": investors,
-        "source_page": _format_page_numbers(source_pages),
+        "source_page": page_str,
         "confidence": _calculate_confidence(investors),
     }

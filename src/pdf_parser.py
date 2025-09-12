@@ -1,54 +1,105 @@
 """
-This module is responsible for handling all interactions with PDF files.
+This module is responsible for all direct interactions with PDF files.
 
-It uses the PyMuPDF library (fitz) to extract text content from PDF documents,
-providing functions to get text from the entire document at once or page by page.
+It uses the PyMuPDF library (fitz) to perform two key tasks:
+1.  **Keyword Scanning**: Efficiently searching through the document's text to
+    find pages that are candidates for containing relevant data.
+2.  **Table Extraction**: Using fitz's advanced layout-aware features to find
+    and extract structured table data from the candidate pages.
+
+The final output is a clean, Markdown-formatted string for each table,
+ready for AI processing.
 """
-from typing import Generator
+from typing import List, Any
 
 import fitz  # PyMuPDF
 
 
-def extract_text_from_pdf(pdf_path: str) -> str:
+def _table_to_markdown(table: List[List[Any]]) -> str:
+    """Converts a list of lists into a Markdown table string."""
+    markdown = "| " + " | ".join(map(str, table[0])) + " |\n"
+    markdown += "| " + " | ".join(["---"] * len(table[0])) + " |\n"
+    for row in table[1:]:
+        markdown += "| " + " | ".join(map(str, row)) + " |\n"
+    return markdown
+
+
+def extract_tables_from_page(page: fitz.Page) -> List[str]:
     """
-    Extracts text from all pages of a PDF document.
+    Finds and extracts all tables on a given page and returns them as Markdown strings.
 
     Args:
-        pdf_path: The file path to the PDF document.
+        page: A fitz.Page object.
 
     Returns:
-        A single string containing all the text from the PDF.
+        A list of strings, where each string is a Markdown representation of a table.
     """
-    full_text = []
-    try:
-        doc = fitz.open(pdf_path)
-        for page in doc:
-            full_text.append(page.get_text())
-        doc.close()
-    except Exception as e:
-        print(f"Error reading PDF file: {e}")
-        return ""
-    return "\n".join(full_text)
+    tables = page.find_tables()
+    markdown_tables = []
+    for table in tables:
+        # The .extract() method returns a list of lists, perfect for our conversion
+        table_data = table.extract()
+        if table_data:
+            markdown_tables.append(_table_to_markdown(table_data))
+    return markdown_tables
 
 
-def extract_text_by_page(pdf_path: str) -> Generator[tuple[int, str], None, None]:
+def find_and_extract_tables_as_markdown(pdf_path: str, search_keywords: List[str]) -> List[str]:
     """
-    Extracts text from a PDF document, yielding one page at a time.
+    Scans a PDF for keywords, then extracts tables from the pages where keywords
+    are found, including a context window of one page before and after.
 
     Args:
-        pdf_path: The file path to the PDF document.
+        pdf_path: The path to the PDF file.
+        search_keywords: A list of keywords to identify candidate pages.
 
-    Yields:
-        A tuple containing the page number (1-based) and the text content of that page.
+    Returns:
+        A list of Markdown-formatted tables found on the candidate pages and their context.
     """
+    found_tables = []
     try:
         doc = fitz.open(pdf_path)
-        for i, page in enumerate(doc):
-            yield i + 1, page.get_text()
+
+        # First pass: Find all pages that contain our keywords
+        candidate_pages = set()
+        for page in doc:
+            text = page.get_text("text", sort=True).lower()
+            found_kws = {kw for kw in search_keywords if kw.lower() in text}
+            if len(found_kws) >= 2:
+                candidate_pages.add(page.number + 1)
+
+        if not candidate_pages:
+            # Fallback to single keyword search
+            for page in doc:
+                text = page.get_text("text", sort=True).lower()
+                if any(keyword.lower() in text for keyword in search_keywords):
+                    candidate_pages.add(page.number + 1)
+        
+        if not candidate_pages:
+            doc.close()
+            return []
+
+        # Create a context window of pages to scan for tables (before, during, after)
+        pages_to_scan_for_tables = set()
+        for page_num in sorted(list(candidate_pages)):
+            page_idx = page_num - 1
+            if page_idx > 0:
+                pages_to_scan_for_tables.add(page_idx - 1)  # Page before
+            pages_to_scan_for_tables.add(page_idx)             # The candidate page
+            if page_idx < doc.page_count - 1:
+                pages_to_scan_for_tables.add(page_idx + 1)  # Page after
+
+        # Second pass: Extract tables from the context window pages
+        for page_idx in sorted(list(pages_to_scan_for_tables)):
+            page = doc[page_idx]
+            page_tables = extract_tables_from_page(page)
+            if page_tables:
+                page_num = page.number + 1
+                found_tables.extend([f"--- Page {page_num} ---\n" + table for table in page_tables])
         doc.close()
     except Exception as e:
-        print(f"Error reading PDF file: {e}")
-        return
+        print(f"Error processing PDF for table extraction: {e}")
+    return found_tables
 
 
 def get_page_count(pdf_path: str) -> int:

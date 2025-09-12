@@ -1,8 +1,9 @@
 """
-This script serves as the main entry point for the application.
+This script serves as the main entry point and orchestrator for the application.
 
-It handles command-line argument parsing, orchestrates the PDF parsing and
-data extraction process, and prints the final structured JSON output to the console.
+It handles command-line argument parsing (PDF path, verbose, debug),
+invokes the core data extraction pipeline, validates the final results using
+Pydantic models, and prints the structured JSON output to the console.
 """
 
 import argparse
@@ -22,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description="Extract underwriter and guarantor data from a PDF document.")
     parser.add_argument("pdf_path", type=str, help="The file path or URL to the PDF document.")
     parser.add_argument("--verbose", action="store_true", help="Print a detailed efficiency analysis report.")
-    parser.add_argument("--debug", action="store_true", help="Print the raw text extracted by fitz before AI processing.")
+    parser.add_argument("--debug", action="store_true", help="Print the raw Markdown tables extracted by fitz before AI processing.")
     args = parser.parse_args()
 
     if not os.path.exists(args.pdf_path):
