@@ -64,7 +64,9 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     Creates the prompt for the OpenAI API to convert a Markdown table to JSON.
     """
     return f"""
-    You are an expert AI assistant specializing in financial data processing. Your task is to convert the following Markdown table(s) into a structured JSON format.
+    You are an expert AI assistant specializing in financial data processing. Your task is to convert the following financial data into a structured JSON format.
+
+    The input contains text and Markdown table(s) extracted from a PDF page. You must use the **Page Text** to understand the context, especially for column headers which might be missing from the Markdown table itself.
 
     **Definitions:**
     - **Underwriter (Swedish: "teckningsåtagare")**: A person or entity that has committed to underwriting an issue. They are not compensated. Their investor level is always 0.
@@ -73,22 +75,31 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     - **Share of the rights issue percentage (Swedish: "Andel av Företrädesemissionen")**: The percentage of the issue that the investor has committed to underwrite or guarantee.
 
     **Investor Level Mapping:**
-    - Commitments from a "Tecknings-förbindelser" or "Teckningsåtaganden" column are **investor_level 0**.
-    - Commitments from a general "Garantiåtaganden" or "Garantier" column are **investor_level 1**.
+    - Commitments from a "Tecknings-förbindelser", "Teckningsåtaganden", or similar column are **investor_level 0**.
+    - Commitments from a general "Garantiåtaganden", "Garantier", or similar column are **investor_level 1**.
     - Commitments from a "Botten-garantier" column are **investor_level 1**.
     - Commitments from a "Toppgarantier" column are **investor_level 2**.
+    - If a single person has commitments in multiple columns (e.g., both underwriting and guaranteeing), create a separate investor object for each commitment.
 
     **Data Cleaning Rules (VERY IMPORTANT):**
-    - When extracting numbers for `amount` and `percent`, you MUST clean them into a pure numerical format.
-    - **For `amount`**: Remove all spaces, currency symbols (e.g., "SEK"), and text. If there is a comma decimal, round to the nearest whole number. The final value must be an integer.
+    - **Use Page Text for Context**: The Markdown tables might be missing headers. Use the accompanying **Page Text** to find the correct column headers and understand the table's structure.
+    - **For `amount`**:
+        - Check the **Page Text** or table headers for currency units like "TSEK", "KSEK" (thousands), or "MSEK" (millions). If found, you MUST multiply the numerical amount by the correct factor (1,000 for TSEK/KSEK, 1,000,000 for MSEK).
+        - This is also true for range of amounts. Make sure to multiply the range by the correct factor.
+        - After accounting for units, remove all spaces, currency symbols (e.g., "SEK"), and text. 
+        - If an amount is expressed as a range (e.g., "2 - 100"), it MUST be stored as a string "2 - 100".
+        - You MUST represent the amount as a float if it has a decimal represented as a comma. (e.g., "123 456,10" should be represented as 123456.10)
+        - The final value must be an integer, a float, or a string if it is a range. Do not process columns that represent totals of other columns.
     - **For `percent`**: Remove the percentage sign (`%`). Use a period (`.`) as the decimal separator. The final value must be a float.
+    - **Ignore Summary Rows**: Do not extract data from rows that are clearly totals or summaries (e.g., starting with "Totalt", "Summa").
 
     **Instructions:**
-    1.  Parse the Markdown table(s) provided below.
-    2.  For each row, create a separate JSON object for each commitment found. A single name can have multiple commitments.
-    3.  Extract the `name`, `commitment`, and determine the `investor_level` using the mapping above.
-    4.  Apply the **Data Cleaning Rules** to all numerical values.
-    5.  The `source_pages` are indicated by the `--- Page X ---` markers. Your JSON response must include a `source_pages` key containing a list of these page numbers.
+    1.  Carefully read the **Page Text** to understand the context of the table(s).
+    2.  Parse the Markdown table(s). Use the context to assign correct headers if they are missing.
+    3.  For each row representing an investor, create one or more JSON objects for each commitment found.
+    4.  Extract the `name`, `commitment` (`amount`, `percent`), and determine the `investor_level`.
+    5.  Apply the **Data Cleaning Rules** meticulously to all numerical values.
+    6.  The `source_pages` are indicated by the `--- Page X ---` markers. Your JSON response must include a `source_pages` key containing a list of these page numbers.
 
     **Example Output Format:**
     ```json
@@ -107,7 +118,7 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     }}
     ```
 
-    **Markdown Table(s) for Analysis:**
+    **Financial Data for Analysis:**
     ---
     {markdown_tables}
     ---
@@ -123,13 +134,13 @@ def _extract_data_from_markdown(markdown: str) -> Dict[str, Any]:
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant designed to output JSON."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.0,
+            temperature=1.0,
         )
         response_content = response.choices[0].message.content
         if response_content:

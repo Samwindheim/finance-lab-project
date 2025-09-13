@@ -95,7 +95,14 @@ def find_and_extract_tables_as_markdown(pdf_path: str, search_keywords: List[str
             page_tables = extract_tables_from_page(page)
             if page_tables:
                 page_num = page.number + 1
-                found_tables.extend([f"--- Page {page_num} ---\n" + table for table in page_tables])
+                page_text = page.get_text("text", sort=True)
+                
+                page_content = f"--- Page {page_num} ---\n"
+                page_content += f"**Page Text:**\n{page_text}\n---\n"
+                page_content += "**Extracted Table(s):**\n"
+                page_content += "\n".join(page_tables)
+                found_tables.append(page_content)
+
         doc.close()
     except Exception as e:
         print(f"Error processing PDF for table extraction: {e}")

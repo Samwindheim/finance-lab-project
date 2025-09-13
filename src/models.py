@@ -15,7 +15,7 @@ class Commitment(BaseModel):
     """
     Represents the commitment made by an investor.
     """
-    amount: Optional[int] = Field(None, description="The commitment amount in the relevant currency.")
+    amount: Optional[Union[int, float, str]] = Field(None, description="The commitment amount. Can be an integer, float, or a string for ranges.")
     percent: Optional[float] = Field(None, description="The commitment as a percentage of the total issue.")
 
 
