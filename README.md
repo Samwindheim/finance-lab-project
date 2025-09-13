@@ -104,7 +104,7 @@ The script outputs a JSON object to standard output. The structure is defined by
 ```json
 {
   "meta": {
-    "source": "ADVT_2025_08_14_Memorandum.pdf",
+    "source": "example.pdf",
     "extracted_at": "2025-09-13T12:00:00.000000Z",
     "source_page": "11,12",
     "confidence": "high"
@@ -113,7 +113,7 @@ The script outputs a JSON object to standard output. The structure is defined by
     {
       "name": "Investor Name One",
       "commitment": {
-        "amount": 500000,
+        "amount": 10000,
         "percent": 5.1
       },
       "investor_level": 0
@@ -121,7 +121,7 @@ The script outputs a JSON object to standard output. The structure is defined by
     {
       "name": "Investor Name Two",
       "commitment": {
-        "amount": 250000,
+        "amount": 20000,
         "percent": 2.5
       },
       "investor_level": 1
