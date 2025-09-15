@@ -19,12 +19,12 @@ from typing import Dict, Any, List
 
 from src.pdf_parser import find_and_extract_tables_as_markdown, get_page_count
 
+LLM_MODEL = "gpt-5-mini"
 
 SEARCH_KEYWORDS = [
     "underwriter", "guarantor", "teckningsåtagare", "garant",
     "commitment", "åtaganden", "garantiåtaganden", "teckningsåtaganden"
 ]
-
 
 def get_openai_client() -> OpenAI:
     """
@@ -90,6 +90,7 @@ def create_extraction_prompt(markdown_tables: str) -> str:
         - If an amount is expressed as a range (e.g., "2 - 100"), it MUST be stored as a string "2 - 100".
         - You MUST represent the amount as a float if it has a decimal represented as a comma. (e.g., "123 456,10" should be represented as 123456.10)
         - The final value must be an integer, a float, or a string if it is a range. Do not process columns that represent totals of other columns.
+        - If a name has a subscript, do not include it in the name. E.g. "Jim Joe¹" should be "Jim Joe".
     - **For `percent`**: Remove the percentage sign (`%`). Use a period (`.`) as the decimal separator. The final value must be a float.
     - **Ignore Summary Rows**: Do not extract data from rows that are clearly totals or summaries (e.g., starting with "Totalt", "Summa").
 
@@ -134,7 +135,7 @@ def _extract_data_from_markdown(markdown: str) -> Dict[str, Any]:
 
     try:
         response = client.chat.completions.create(
-            model="gpt-5-mini",
+            model=LLM_MODEL,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant designed to output JSON."},
                 {"role": "user", "content": prompt}
@@ -190,6 +191,9 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
 
     investors = extracted_data.get("investors", [])
     source_pages = extracted_data.get("source_pages", [])
+
+    # Sort investors by investor level for consistent output
+    investors.sort(key=lambda x: x.get("investor_level", 0))
 
     # Verbose: print the efficiency analysis
     if verbose:

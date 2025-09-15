@@ -1,0 +1,196 @@
+{
+  "investors": [
+    {
+      "name": "Stefan Svedberg",
+      "commitment": {
+        "amount": 500000,
+        "percent": 0.8
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "ALMI Invest Syd AB",
+      "commitment": {
+        "amount": 500000,
+        "percent": 0.8
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Paula Eninge",
+      "commitment": {
+        "amount": 299000,
+        "percent": 0.5
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Paula Eninge",
+      "commitment": {
+        "amount": 200000,
+        "percent": 0.3
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Svein-Egil Nielsen",
+      "commitment": {
+        "amount": 250000,
+        "percent": 0.4
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Cajsa Wramdemark",
+      "commitment": {
+        "amount": 185000,
+        "percent": 0.3
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Cajsa Wramdemark",
+      "commitment": {
+        "amount": 300000,
+        "percent": 0.5
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Nowo Global Fund",
+      "commitment": {
+        "amount": 14000000,
+        "percent": 21.5
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Nowo Global Fund",
+      "commitment": {
+        "amount": 5000000,
+        "percent": 7.7
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Wilhelm Risberg",
+      "commitment": {
+        "amount": 7500000,
+        "percent": 11.5
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Wilhelm Risberg",
+      "commitment": {
+        "amount": 2500000,
+        "percent": 3.8
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Fredrik Lundgren",
+      "commitment": {
+        "amount": 7500000,
+        "percent": 11.5
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Fredrik Lundgren",
+      "commitment": {
+        "amount": 2500000,
+        "percent": 3.8
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Bernhard von der Osten-Sacken",
+      "commitment": {
+        "amount": 3000000,
+        "percent": 4.6
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Crafoord Capital Partners AB",
+      "commitment": {
+        "amount": 2800000,
+        "percent": 4.3
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Crafoord Capital Partners AB",
+      "commitment": {
+        "amount": 1200000,
+        "percent": 1.8
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Meriti Ekorren Global",
+      "commitment": {
+        "amount": 2000000,
+        "percent": 3.1
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Meriti Ekorren Global",
+      "commitment": {
+        "amount": 1000000,
+        "percent": 1.5
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Meriti Neutral",
+      "commitment": {
+        "amount": 1500000,
+        "percent": 2.3
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Mikael Mäkilä",
+      "commitment": {
+        "amount": 5000000,
+        "percent": 7.7
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Lars Ahlman",
+      "commitment": {
+        "amount": 4000000,
+        "percent": 6.2
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Lars Åkerman",
+      "commitment": {
+        "amount": 2000000,
+        "percent": 3.1
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Robin Bern",
+      "commitment": {
+        "amount": 1000000,
+        "percent": 1.5
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Rune Löderup",
+      "commitment": {
+        "amount": 322083,
+        "percent": 0.5
+      },
+      "investor_level": 2
+    }
+  ]
+}

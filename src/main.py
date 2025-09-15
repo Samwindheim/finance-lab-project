@@ -10,8 +10,8 @@ import argparse
 import os
 from dotenv import load_dotenv
 
-from src.data_extractor import extract_investor_data
-from src.models import ExtractionResult, Meta
+from data_extractor import extract_investor_data
+from models import ExtractionResult, Meta
 
 
 def main():

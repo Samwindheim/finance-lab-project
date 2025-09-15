@@ -1,0 +1,180 @@
+{
+  "investors": [
+    {
+      "name": "Biljon AB",
+      "commitment": {
+        "amount": 1098601,
+        "percent": 7.6
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Johan Ekström",
+      "commitment": {
+        "amount": 200000,
+        "percent": 1.4
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Christoffer Stackell",
+      "commitment": {
+        "amount": 60438,
+        "percent": 0.4
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Jonas Söderqvist",
+      "commitment": {
+        "amount": 27125,
+        "percent": 0.2
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Edvin Malmgård",
+      "commitment": {
+        "amount": 73500,
+        "percent": 0.5
+      },
+      "investor_level": 0
+    },
+    {
+      "name": "Goldcup 37212 AB",
+      "commitment": {
+        "amount": 5900000,
+        "percent": 41.1
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Newick AB",
+      "commitment": {
+        "amount": 500000,
+        "percent": 3.5
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Augvest AB",
+      "commitment": {
+        "amount": 500000,
+        "percent": 3.5
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Grimborg Consulting AB (Michael Grimborg)",
+      "commitment": {
+        "amount": 400000,
+        "percent": 2.8
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Protocol Ventures AB (Petter Nylander)",
+      "commitment": {
+        "amount": 250000,
+        "percent": 1.7
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Ubb Consulting AB",
+      "commitment": {
+        "amount": 448639,
+        "percent": 3.1
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Olle Olsson",
+      "commitment": {
+        "amount": 425000,
+        "percent": 3.0
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Robert Buren",
+      "commitment": {
+        "amount": 250000,
+        "percent": 1.7
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Oskar Sandberg",
+      "commitment": {
+        "amount": 250000,
+        "percent": 1.7
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Andreas Poike",
+      "commitment": {
+        "amount": 250000,
+        "percent": 1.7
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Johanna Lindner",
+      "commitment": {
+        "amount": 800000,
+        "percent": 5.6
+      },
+      "investor_level": 1
+    },
+    {
+      "name": "Biljon AB",
+      "commitment": {
+        "amount": 1901399,
+        "percent": 13.2
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Ubb Consulting AB",
+      "commitment": {
+        "amount": 250000,
+        "percent": 1.7
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Olle Olsson",
+      "commitment": {
+        "amount": 250000,
+        "percent": 1.7
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Edvin Malmgård",
+      "commitment": {
+        "amount": 60000,
+        "percent": 0.4
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Jonas Söderqvist",
+      "commitment": {
+        "amount": 72875,
+        "percent": 0.5
+      },
+      "investor_level": 2
+    },
+    {
+      "name": "Christoffer Stackell",
+      "commitment": {
+        "amount": 400000,
+        "percent": 2.8
+      },
+      "investor_level": 2
+    }
+  ]
+}

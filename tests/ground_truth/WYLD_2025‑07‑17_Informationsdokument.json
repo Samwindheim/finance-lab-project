@@ -1,0 +1,100 @@
+{
+    "investors": [
+      {
+        "name": "Tuvedalen Ltd.",
+        "commitment": {
+          "amount": 1652366.88,
+          "percent": 9.4
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Dattasri Gogineni",
+        "commitment": {
+          "amount": 851946.1,
+          "percent": 4.9
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Kai Olsen",
+        "commitment": {
+          "amount": 292397.44,
+          "percent": 1.7
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Mats L Andersson",
+        "commitment": {
+          "amount": 79793.18,
+          "percent": 0.5
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "André Eriksson",
+        "commitment": {
+          "amount": 75000.0,
+          "percent": 0.4
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Mats R Andersson",
+        "commitment": {
+          "amount": 62091.14,
+          "percent": 0.4
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Eugene Myers",
+        "commitment": {
+          "amount": 54709.92,
+          "percent": 0.3
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Alastair Williamson",
+        "commitment": {
+          "amount": 29103.02,
+          "percent": 0.2
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Chris Caswell",
+        "commitment": {
+          "amount": 27052.06,
+          "percent": 0.2
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Tuvedalen Ltd.",
+        "commitment": {
+          "amount": 8426639.68,
+          "percent": 48.0
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Olsen Fond & Försäkring AB",
+        "commitment": {
+          "amount": 5000000.0,
+          "percent": 28.5
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Dattasri Gogineni",
+        "commitment": {
+          "amount": 1000000.0,
+          "percent": 5.7
+        },
+        "investor_level": 1
+      }
+    ]
+  }

@@ -1,0 +1,244 @@
+{
+    "investors": [
+      {
+        "name": "Christian Berger",
+        "commitment": {
+          "amount": 500000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Anders Haskel",
+        "commitment": {
+          "amount": 300000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Philip Löchen",
+        "commitment": {
+          "amount": 400000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Christian Månsson",
+        "commitment": {
+          "amount": 500000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "UBB Consulting",
+        "commitment": {
+          "amount": 1000000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "BGL Management",
+        "commitment": {
+          "amount": 250000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "JTB Invest AB",
+        "commitment": {
+          "amount": 250000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Dividend Sweden AB",
+        "commitment": {
+          "amount": 250000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Oscar Sandberg",
+        "commitment": {
+          "amount": 100000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "JJV Investment Group AB",
+        "commitment": {
+          "amount": 500000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Andreas Poike",
+        "commitment": {
+          "amount": 250000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "ID 1 AB",
+        "commitment": {
+          "amount": 400000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Rikard Bergsten",
+        "commitment": {
+          "amount": 100000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Aydin Alp",
+        "commitment": {
+          "amount": 200000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Fredrik Åhlander",
+        "commitment": {
+          "amount": 150000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Rune Löderup",
+        "commitment": {
+          "amount": 180869,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Great Ventures & Consulting GVC AB",
+        "commitment": {
+          "amount": 150000,
+          "percent": null
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Erik Hermansson",
+        "commitment": {
+          "amount": 500000,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Fredr Corin & Co AB",
+        "commitment": {
+          "amount": 250000,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Lindia Invest AB",
+        "commitment": {
+          "amount": 300000,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Felix Borg Invest AB",
+        "commitment": {
+          "amount": 500000,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Tellus Equity Partners AB",
+        "commitment": {
+          "amount": 1050001,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Quantum Leben AG/Gerhard Dal",
+        "commitment": {
+          "amount": 474823,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Alingsåseken Holding AB",
+        "commitment": {
+          "amount": 500000,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Klas Zetterman",
+        "commitment": {
+          "amount": 250000,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Mats Beausang",
+        "commitment": {
+          "amount": 200000,
+          "percent": null
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Oskar Olai",
+        "commitment": {
+          "amount": 72000,
+          "percent": null
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Stevce Mojanovski",
+        "commitment": {
+          "amount": 150000,
+          "percent": null
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Håkan Johansson",
+        "commitment": {
+          "amount": 250000,
+          "percent": null
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Lars Darvall",
+        "commitment": {
+          "amount": 55200,
+          "percent": null
+        },
+        "investor_level": 0
+      }
+    ]
+  }

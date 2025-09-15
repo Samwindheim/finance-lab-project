@@ -1,0 +1,164 @@
+{
+    "investors": [
+      {
+        "name": "Anders Morén",
+        "commitment": {
+          "amount": 63423,
+          "percent": 0.08
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Anders Rylander",
+        "commitment": {
+          "amount": 8078808,
+          "percent": 10.09
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Anders Rylander",
+        "commitment": {
+          "amount": 2000000,
+          "percent": 2.5
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Dekatria AB",
+        "commitment": {
+          "amount": 33649,
+          "percent": 0.04
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Erik Birgersson",
+        "commitment": {
+          "amount": 862454,
+          "percent": 1.08
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Erik och Ulrika AB",
+        "commitment": {
+          "amount": 5000000,
+          "percent": 6.24
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Fenja Capital I A/S",
+        "commitment": {
+          "amount": 8000000,
+          "percent": 9.99
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "Gerhard Dal",
+        "commitment": {
+          "amount": 2900000,
+          "percent": 3.62
+        },
+        "investor_level": 1
+      },
+      {
+        "name": "HDF Impact BV",
+        "commitment": {
+          "amount": 3972873,
+          "percent": 4.96
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "HDF Impact BV",
+        "commitment": {
+          "amount": 36027850,
+          "percent": 44.99
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Innovicum AB",
+        "commitment": {
+          "amount": 1945669,
+          "percent": 2.43
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Innovicum AB",
+        "commitment": {
+          "amount": 2445974,
+          "percent": 3.05
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Jesper Söderqvist",
+        "commitment": {
+          "amount": 96347,
+          "percent": 0.12
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Jörgen Bladh",
+        "commitment": {
+          "amount": 81900,
+          "percent": 0.1
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Jörgen Bladh",
+        "commitment": {
+          "amount": 2500000,
+          "percent": 3.12
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Lars Holmqvist",
+        "commitment": {
+          "amount": 300000,
+          "percent": 0.37
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Mastan AB",
+        "commitment": {
+          "amount": 669740,
+          "percent": 0.84
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Mats Danielsson via Innovicum AB",
+        "commitment": {
+          "amount": 608357,
+          "percent": 0.76
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Svanberg & Co Invest AB",
+        "commitment": {
+          "amount": 2000000,
+          "percent": 2.5
+        },
+        "investor_level": 2
+      },
+      {
+        "name": "Ulf Gustafsson",
+        "commitment": {
+          "amount": 2500000,
+          "percent": 3.12
+        },
+        "investor_level": 2
+      }
+    ]
+  }

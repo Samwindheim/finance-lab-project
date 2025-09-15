@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a pipeline designed to extract information about underwriters and guarantors from financial PDF documents. It leverages a two-stage process involving precise table extraction using `PyMuPDF` and advanced data structuring using OpenAI's `gpt-5-mini` model.
+This project is a pipeline designed to extract information about underwriters and guarantors from financial PDF documents. It leverages a two-stage process involving precise, context-aware table extraction using `PyMuPDF` and advanced data structuring using OpenAI's `gpt-5-mini` model.
 
 The primary goal is to convert unstructured tables within PDFs into a clean, validated, and structured JSON format.
 
@@ -19,24 +19,21 @@ The primary goal is to convert unstructured tables within PDFs into a clean, val
 The application operates using a two-stage Retrieval-Augmented Generation (RAG) pipeline:
 
 1.  **Stage 1: Retrieval (Local Processing)**
-    -   The PDF is scanned for a set of keywords (e.g., "underwriter", "guarantor", "teckningsåtagare") to identify candidate pages.
-    -   The tool creates a context window of pages (one page before and after the candidate page) to ensure no relevant data is missed.
-    -   `PyMuPDF` (`fitz`) is used to find and extract all tables from these pages.
-    -   The extracted tables are converted into a clean Markdown format.
+    -   The PDF is scanned for keywords (e.g., "underwriter", "guarantor") to identify candidate pages.
+    -   A context window of pages (one before, one after) is created to ensure no relevant data is missed.
+    -   `PyMuPDF` (`fitz`) extracts both the tables and the full text from these pages.
+    -   This combined data (text + tables) is formatted and prepared for the AI.
 
 2.  **Stage 2: Generation (AI Processing)**
-    -   The Markdown tables are sent to the `gpt-5-mini` API with a detailed prompt.
-    -   The prompt includes definitions, investor level mappings, and strict data cleaning 
-    -   The AI processes the tables and returns a structured JSON object.
+    -   The contextual data is sent to the `gpt-5-mini` API with a detailed prompt.
+    -   The prompt instructs the AI to use the page text to understand headers, units, and other context, then apply strict data cleaning rules.
+    -   The AI returns a structured JSON object.
 
-Finally, the application validates this JSON response against Pydantic models and prints the final, clean output to the console.
+Finally, the application sorts the extracted investors by their `investor_level`, validates the data against Pydantic models, and prints the final, clean output.
 
 ## Setup & Installation
 
-Follow these steps to set up the project environment.
-
 **1. Clone the Repository**
-
 ```bash
 git clone <repository-url>
 cd finance-lab-project
@@ -44,58 +41,50 @@ cd finance-lab-project
 
 **2. Create a Virtual Environment**
 
-It is recommended to use a virtual environment to manage dependencies.
-
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 **3. Install Dependencies**
-
-Install the required Python packages using `requirements.txt`.
-
 ```bash
 pip install -r requirements.txt
 ```
 
 **4. Set Up Environment Variables**
+The application requires an OpenAI API key. Create a `.env` file:
 
-The application requires an OpenAI API key. Create a `.env` file in the root of the project:
-
-```
-touch .env
-```
-
-Then, add your API key to the `.env` file:
-
+Then, add your API key to it:
 ```
 OPENAI_API_KEY="your-openai-api-key-here"
 ```
 
 ## Usage
 
-You can run the extraction process using the provided shell script or by directly invoking the Python script. The script takes the path to a PDF file as an argument.
-
-**Using the Shell Script (Recommended)**
-
-The `extract_underwriters.sh` script handles the activation of the virtual environment automatically.
+Run the extraction process using the provided shell script, passing the path to a PDF file.
 
 ```bash
 ./extract_underwriters.sh path/to/your/document.pdf
 ```
 
 ### Command-Line Arguments
-
 -   `pdf_path` (Required): The file path to the PDF document.
--   `--verbose`: (Optional) Prints a detailed efficiency analysis report, including document page count and processing durations.
--   `--debug`: (Optional) Prints the raw Markdown tables extracted by `PyMuPDF` before they are sent to the AI for processing.
+-   `--verbose`: (Optional) Prints an efficiency analysis report.
+-   `--debug`: (Optional) Prints the raw contextual data sent to the AI.
 
-### Example
+## Testing for Accuracy
 
+The project includes a testing framework to verify the accuracy of the extraction against "ground truth" data.
+
+**1. Create a Ground Truth File**
+For a PDF you want to test (e.g., `mydoc.pdf`), manually create a correct JSON file and save it as `tests/ground_truth/mydoc.json`. This file should contain the exact `investors` array you expect the script to produce.
+
+**2. Run the Test**
+Execute the test script, passing the path to the PDF:
 ```bash
-./extract_underwriters.sh pdfs/ADVT_2025_08_14_Memorandum.pdf --verbose
+./test.sh path/to/your/document.pdf
 ```
+The script will compare the output from your program against the ground truth data and report any differences.
 
 ## Output Structure
 
@@ -106,7 +95,7 @@ The script outputs a JSON object to standard output. The structure is defined by
   "meta": {
     "source": "example.pdf",
     "extracted_at": "2025-09-13T12:00:00.000000Z",
-    "source_page": "11,12",
+    "source_page": "2,3",
     "confidence": "high"
   },
   "investors": [
