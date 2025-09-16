@@ -22,8 +22,9 @@ from .pdf_parser import find_and_extract_tables_as_markdown, get_page_count
 LLM_MODEL = "gpt-5-mini"
 
 SEARCH_KEYWORDS = [
-    "underwriter", "guarantor", "teckningsåtagare", "garant",
-    "commitment", "åtaganden", "garantiåtaganden", "teckningsåtaganden"
+    "teckningsåtagare", "garant",
+    "commitment", "åtaganden", "garantiåtaganden", "teckningsåtaganden", "teckningsförbindelser"
+    "garantier", "botten-garantier", "bottom-up garantiåtaganden", "toppgarantier", "top-down garantiåtaganden"
 ]
 
 def get_openai_client() -> OpenAI:
@@ -70,7 +71,7 @@ def create_extraction_prompt(markdown_tables: str) -> str:
 
     **Key Rules:**
     - Use Page Text for missing headers/context.
-    - Each investor row → JSON object(s).
+    - Each investor row → one JSON object.
     - Include: 
     - `name`
     - `commitment`: {{ "amount", "percent" }}
@@ -78,21 +79,28 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     - Add `source_pages` from `--- Page X ---`.
 
     **Investor Levels:**
-    - Underwriter (“Teckningsåtagare” etc.) → level 0
-    - Guarantor (“Garantier”, “Botten-garantier”) → level 1
-    - “Toppgarantier” → level 2
+    - Underwriter (“Teckningsåtagare” or "Teckningsförbindelser" or similar) → level 0
+    - Guarantor (“Garantier”, “Botten-garantier”, or "Bottom-up garantiåtaganden" or similar) → level 1
+    - “Toppgarantier” or "Top-down garantiåtaganden" or similar → level 2
     - If same person has multiple roles → create separate objects.
 
     **Data Cleaning:**
     - **Amount:**
-    - Units: TSEK/KSEK ×1,000; MSEK ×1,000,000.
+    - Units: TSEK multiply by 1,000; MSEK multiply by 1,000,000.
     - Remove spaces, currency text, symbols.
-    - Ranges → string (e.g., "2 - 100").
+    - Ranges → string (e.g., "2 - 100"). (apply units multiplication if necessary).
     - Decimals: convert comma → period (e.g., "123 456,10" → 123456.10).
+    - Spaces in numbers → remove (e.g., "123 456" → 123456).
+
     - **Percent:** remove `%`, use `.` decimal, store as float.
+
     - **Ignore totals/summaries** (rows like “Totalt”, “Summa”).
+
     - Remove footnotes/subscripts from names (e.g., “Jim Joe¹” → “Jim Joe”).
-    - Do not make up any data. It is important that there are no hallucinations.
+    - Keep names exactly as written(e.g., “Grimborg Consulting AB (Michael Grimborg)” → “Grimborg Consulting AB (Michael Grimborg)”).
+    - If the name spans a new line, treat it as a space. "Joe & Be\nCompany AB" → "Joe & Be Company AB"
+
+    - Important: Do not make up any data. It is important that there are no hallucinations.
 
     **Output Format Example:**
     ```json
@@ -133,7 +141,7 @@ def _extract_data_from_markdown(markdown: str) -> Dict[str, Any]:
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=1.0,
+            reasoning_effort="low"
         )
         response_content = response.choices[0].message.content
         if response_content:
