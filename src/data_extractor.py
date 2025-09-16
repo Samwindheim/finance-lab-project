@@ -66,6 +66,7 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     return f"""
         You are an expert AI assistant specializing in financial data processing.  
     Convert financial data (Page Text + Markdown tables) into structured JSON.
+    Prioritize the markdown tables over the page text. 
 
     **Key Rules:**
     - Use Page Text for missing headers/context.
@@ -91,6 +92,7 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     - **Percent:** remove `%`, use `.` decimal, store as float.
     - **Ignore totals/summaries** (rows like “Totalt”, “Summa”).
     - Remove footnotes/subscripts from names (e.g., “Jim Joe¹” → “Jim Joe”).
+    - Do not make up any data. It is important that there are no hallucinations.
 
     **Output Format Example:**
     ```json
