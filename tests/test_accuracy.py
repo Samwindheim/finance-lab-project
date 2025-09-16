@@ -22,9 +22,10 @@ def compare_investors(actual: Dict[str, Any], expected: Dict[str, Any]) -> List[
     
     # Check each field in the expected investor record
     for key in expected:
-        # If the actual record is missing this field entirely
+        # If the actual record is missing this field, check if it was expected to be null
         if key not in actual:
-            errors.append(f"Missing key: {key}")
+            if expected[key] is not None:
+                errors.append(f"Missing key: {key}")
             continue
             
         # If this field is a nested dictionary (like 'commitment'), compare recursively

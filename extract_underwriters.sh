@@ -15,4 +15,4 @@ fi
 
 # Activate the virtual environment and run the main Python script
 source .venv/bin/activate
-python3 src/main.py "$@"
+python3 -m src.main "$@"

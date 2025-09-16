@@ -17,7 +17,7 @@ import json
 from openai import OpenAI
 from typing import Dict, Any, List
 
-from src.pdf_parser import find_and_extract_tables_as_markdown, get_page_count
+from .pdf_parser import find_and_extract_tables_as_markdown, get_page_count
 
 LLM_MODEL = "gpt-5-mini"
 
@@ -64,45 +64,35 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     Creates the prompt for the OpenAI API to convert a Markdown table to JSON.
     """
     return f"""
-    You are an expert AI assistant specializing in financial data processing. Your task is to convert the following financial data into a structured JSON format.
+        You are an expert AI assistant specializing in financial data processing.  
+    Convert financial data (Page Text + Markdown tables) into structured JSON.
 
-    The input contains text and Markdown table(s) extracted from a PDF page. You must use the **Page Text** to understand the context, especially for column headers which might be missing from the Markdown table itself.
+    **Key Rules:**
+    - Use Page Text for missing headers/context.
+    - Each investor row → JSON object(s).
+    - Include: 
+    - `name`
+    - `commitment`: {{ "amount", "percent" }}
+    - `investor_level`
+    - Add `source_pages` from `--- Page X ---`.
 
-    **Definitions:**
-    - **Underwriter (Swedish: "teckningsåtagare")**: A person or entity that has committed to underwriting an issue. They are not compensated. Their investor level is always 0.
-    - **Guarantor (Swedish: "Garant")**: A person or entity that agrees to sign up for shares if the issue is not filled. They are compensated for this service. Their investor level starts at 1 for the first/lowest guarantee level, 2 for the next, and so on.
-    - **Amount (Swedish: "Belopp")**: The amount in SEK (or other currency) that the investor has committed to underwrite or guarantee.
-    - **Share of the rights issue percentage (Swedish: "Andel av Företrädesemissionen")**: The percentage of the issue that the investor has committed to underwrite or guarantee.
+    **Investor Levels:**
+    - Underwriter (“Teckningsåtagare” etc.) → level 0
+    - Guarantor (“Garantier”, “Botten-garantier”) → level 1
+    - “Toppgarantier” → level 2
+    - If same person has multiple roles → create separate objects.
 
-    **Investor Level Mapping:**
-    - Commitments from a "Tecknings-förbindelser", "Teckningsåtaganden", or similar column are **investor_level 0**.
-    - Commitments from a general "Garantiåtaganden", "Garantier", or similar column are **investor_level 1**.
-    - Commitments from a "Botten-garantier" column are **investor_level 1**.
-    - Commitments from a "Toppgarantier" column are **investor_level 2**.
-    - If a single person has commitments in multiple columns (e.g., both underwriting and guaranteeing), create a separate investor object for each commitment.
+    **Data Cleaning:**
+    - **Amount:**
+    - Units: TSEK/KSEK ×1,000; MSEK ×1,000,000.
+    - Remove spaces, currency text, symbols.
+    - Ranges → string (e.g., "2 - 100").
+    - Decimals: convert comma → period (e.g., "123 456,10" → 123456.10).
+    - **Percent:** remove `%`, use `.` decimal, store as float.
+    - **Ignore totals/summaries** (rows like “Totalt”, “Summa”).
+    - Remove footnotes/subscripts from names (e.g., “Jim Joe¹” → “Jim Joe”).
 
-    **Data Cleaning Rules (VERY IMPORTANT):**
-    - **Use Page Text for Context**: The Markdown tables might be missing headers. Use the accompanying **Page Text** to find the correct column headers and understand the table's structure.
-    - **For `amount`**:
-        - Check the **Page Text** or table headers for currency units like "TSEK", "KSEK" (thousands), or "MSEK" (millions). If found, you MUST multiply the numerical amount by the correct factor (1,000 for TSEK/KSEK, 1,000,000 for MSEK).
-        - This is also true for range of amounts. Make sure to multiply the range by the correct factor.
-        - After accounting for units, remove all spaces, currency symbols (e.g., "SEK"), and text. 
-        - If an amount is expressed as a range (e.g., "2 - 100"), it MUST be stored as a string "2 - 100".
-        - You MUST represent the amount as a float if it has a decimal represented as a comma. (e.g., "123 456,10" should be represented as 123456.10)
-        - The final value must be an integer, a float, or a string if it is a range. Do not process columns that represent totals of other columns.
-        - If a name has a subscript, do not include it in the name. E.g. "Jim Joe¹" should be "Jim Joe".
-    - **For `percent`**: Remove the percentage sign (`%`). Use a period (`.`) as the decimal separator. The final value must be a float.
-    - **Ignore Summary Rows**: Do not extract data from rows that are clearly totals or summaries (e.g., starting with "Totalt", "Summa").
-
-    **Instructions:**
-    1.  Carefully read the **Page Text** to understand the context of the table(s).
-    2.  Parse the Markdown table(s). Use the context to assign correct headers if they are missing.
-    3.  For each row representing an investor, create one or more JSON objects for each commitment found.
-    4.  Extract the `name`, `commitment` (`amount`, `percent`), and determine the `investor_level`.
-    5.  Apply the **Data Cleaning Rules** meticulously to all numerical values.
-    6.  The `source_pages` are indicated by the `--- Page X ---` markers. Your JSON response must include a `source_pages` key containing a list of these page numbers.
-
-    **Example Output Format:**
+    **Output Format Example:**
     ```json
     {{
       "source_pages": [11],
