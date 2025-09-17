@@ -22,8 +22,7 @@ from .pdf_parser import find_and_extract_tables_as_markdown, get_page_count
 LLM_MODEL = "gpt-5-mini"
 
 SEARCH_KEYWORDS = [
-    "teckningsåtagare", "garant",
-    "commitment", "åtaganden", "garantiåtaganden", "teckningsåtaganden", "teckningsförbindelser"
+    "teckningsåtagare", "garant", "åtaganden", "garantiåtaganden", "teckningsåtaganden", "teckningsförbindelser"
     "garantier", "botten-garantier", "bottom-up garantiåtaganden", "toppgarantier", "top-down garantiåtaganden"
 ]
 
@@ -86,18 +85,19 @@ def create_extraction_prompt(markdown_tables: str) -> str:
 
     **Data Cleaning:**
     - **Amount:**
-    - Units: TSEK multiply by 1,000; MSEK multiply by 1,000,000.
+    - Units: "TSEK" multiply by 1,000. E.g. "100" → "1000000".
     - Remove spaces, currency text, symbols.
-    - Ranges → string (e.g., "2 - 100"). (apply units multiplication if necessary).
-    - Decimals: convert comma → period (e.g., "123 456,10" → 123456.10).
+    - Ranges → string (e.g., "2000 - 10000"). (apply units multiplication to ranges if necessary)
+    - Decimals: The input text represents commas as decimal points. Replace the comma with a period (e.g., "123 456,10" → 123456.10).
     - Spaces in numbers → remove (e.g., "123 456" → 123456).
 
     - **Percent:** remove `%`, use `.` decimal, store as float.
 
     - **Ignore totals/summaries** (rows like “Totalt”, “Summa”).
 
-    - Remove footnotes/subscripts from names (e.g., “Jim Joe¹” → “Jim Joe”).
-    - Keep names exactly as written(e.g., “Grimborg Consulting AB (Michael Grimborg)” → “Grimborg Consulting AB (Michael Grimborg)”).
+    - **Names:**
+    - Do not alter spelling, punctuation, capitalization, or formatting (e.g., “Grimborg Consulting AB (Michael Grimborg)” → “Grimborg Consulting AB (Michael Grimborg)”).
+    - Remove numbers at the end of names (e.g., “Jim Joe1” → “Jim Joe”).
     - If the name spans a new line, treat it as a space. "Joe & Be\nCompany AB" → "Joe & Be Company AB"
 
     - Important: Do not make up any data. It is important that there are no hallucinations.
