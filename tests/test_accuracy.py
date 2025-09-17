@@ -135,17 +135,42 @@ def main():
                 for error in errors:
                     print(f"  - {error}")
     
+    # Check for mystery investors (in actual but not in expected)
+    mystery_investors_details = []
+    for actual in actual_investors:
+        actual_name = actual.get("name", "N/A")
+        actual_level = actual.get("investor_level", -1)
+        
+        match = find_matching_investor(actual_name, actual_level, expected_investors)
+        if match is None:
+            mystery_investors_details.append(actual)
+    
     # Step 5: Report the final results
     if missing_investors:
         print(f"\n--- Missing investors ---")
         for missing in missing_investors:
             print(f"  - {missing}")
+
+    if mystery_investors_details:
+        print(f"\n--- Found mystery investors (not in ground truth) ---")
+        for investor in mystery_investors_details:
+            # Pretty print the investor data for readability
+            investor_details = json.dumps(investor, indent=4, ensure_ascii=False)
+            print(f"  - {investor.get('name')} (level {investor.get('investor_level')}):")
+            # Indent the JSON blob to align with the list item
+            for line in investor_details.splitlines():
+                print(f"    {line}")
     
     # Final verdict
-    if total_errors == 0:
+    if total_errors == 0 and not mystery_investors_details:
         print("\n--- TEST PASSED: All investor data matches the ground truth. ---")
     else:
-        print(f"\n--- TEST FAILED: Found {total_errors} mismatches. ---")
+        report = []
+        if total_errors > 0:
+            report.append(f"{total_errors} mismatches")
+        if mystery_investors_details:
+            report.append(f"{len(mystery_investors_details)} mystery investors")
+        print(f"\n--- TEST FAILED: Found {' and '.join(report)}. ---")
 
 if __name__ == "__main__":
     main()
