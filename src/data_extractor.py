@@ -64,7 +64,7 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     Creates the prompt for the OpenAI API to convert a Markdown table to JSON.
     """
     return f"""
-        You are an expert AI assistant specializing in financial data processing.  
+    You are an expert AI assistant specializing in Swedish financial data processing.  
     Convert financial data (Page Text + Markdown tables) into structured JSON.
     Prioritize the markdown tables over the page text. 
 
@@ -88,17 +88,17 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     - Units: "TSEK" multiply by 1,000. E.g. "100" → "1000000".
     - Remove spaces, currency text, symbols.
     - Ranges → string (e.g., "2000 - 10000"). (apply units multiplication to ranges if necessary)
-    - Decimals: The input text represents commas as decimal points. Replace the comma with a period (e.g., "123 456,10" → 123456.10).
+    - Decimals: The input text represents decimal points (1.5) as commas (1,5). Make sure to replace the comma with a period (e.g., "123 456,10" → 123456.10).
     - Spaces in numbers → remove (e.g., "123 456" → 123456).
 
     - **Percent:** remove `%`, use `.` decimal, store as float.
 
     - **Ignore totals/summaries** (rows like “Totalt”, “Summa”).
 
-    - **Names:**
+    - **Names Swedish: Namn:**
     - Do not alter spelling, punctuation, capitalization, or formatting (e.g., “Grimborg Consulting AB (Michael Grimborg)” → “Grimborg Consulting AB (Michael Grimborg)”).
     - Remove numbers at the end of names (e.g., “Jim Joe1” → “Jim Joe”).
-    - If the name spans a new line, treat it as a space. "Joe & Be\nCompany AB" → "Joe & Be Company AB"
+    - If the name spans a new line, replace the new line with a space. "Svanberg & Co\nInvest AB" → "Svanberg & Co Invest AB"
 
     - Important: Do not make up any data. It is important that there are no hallucinations.
 
@@ -141,7 +141,7 @@ def _extract_data_from_markdown(markdown: str) -> Dict[str, Any]:
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            reasoning_effort="low"
+            reasoning_effort="medium"
         )
         response_content = response.choices[0].message.content
         if response_content:
