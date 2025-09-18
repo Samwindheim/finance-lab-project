@@ -22,8 +22,7 @@ from .pdf_parser import find_and_extract_tables_as_markdown, get_page_count
 LLM_MODEL = "gpt-5-mini"
 
 SEARCH_KEYWORDS = [
-    "teckningsåtagare", "garant", "åtaganden", "garantiåtaganden", "teckningsåtaganden", "teckningsförbindelser"
-    "garantier", "botten-garantier", "bottom-up garantiåtaganden", "toppgarantier", "top-down garantiåtaganden"
+    "förbin", "garant", "SEK"
 ]
 
 def get_openai_client() -> OpenAI:
@@ -99,6 +98,7 @@ def create_extraction_prompt(markdown_tables: str) -> str:
     - Do not alter spelling, punctuation, capitalization, or formatting (e.g., “Grimborg Consulting AB (Michael Grimborg)” → “Grimborg Consulting AB (Michael Grimborg)”).
     - Remove numbers at the end of names (e.g., “Jim Joe1” → “Jim Joe”).
     - If the name spans a new line, replace the new line with a space. "Svanberg & Co\nInvest AB" → "Svanberg & Co Invest AB"
+    - Remove ending asterisk(s) from names (e.g., “Jim Joe*” → “Jim Joe”).
 
     - Important: Do not make up any data. It is important that there are no hallucinations.
 

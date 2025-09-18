@@ -1,0 +1,92 @@
+{
+    "investors": [
+      {
+        "name": "Bure Equity AB",
+        "commitment": {
+          "amount": 4702075,
+          "percent": 14.7
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Fjärde AP-fonden",
+        "commitment": {
+          "amount": 2463750,
+          "percent": 7.7
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Gulf Offshore Limited",
+        "commitment": {
+          "amount": 13175988,
+          "percent": 41.2
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Göran Malmberg",
+        "commitment": {
+          "amount": 889588,
+          "percent": 2.8
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Frans Venker",
+        "commitment": {
+          "amount": 1000000,
+          "percent": 3.1
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Magnus Nilsson",
+        "commitment": {
+          "amount": 512500,
+          "percent": 1.6
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Gösta Johannesson",
+        "commitment": {
+          "amount": 412500,
+          "percent": 1.3
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Eola Runsten",
+        "commitment": {
+          "amount": 200000,
+          "percent": 0.6
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Johann Koss",
+        "commitment": {
+          "amount": 100000,
+          "percent": 0.3
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Denis Gestin",
+        "commitment": {
+          "amount": 1000000,
+          "percent": 3.1
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Plurum AB",
+        "commitment": {
+          "amount": 3400000,
+          "percent": 10.6
+        },
+        "investor_level": 0
+      }
+    ]
+  }

@@ -14,6 +14,16 @@ fi
 
 # Activate the virtual environment and run the test script
 source .venv/bin/activate
-for pdf_file in "$@"; do
-  python3 tests/test_accuracy.py "$pdf_file"
+for arg in "$@"; do
+  if [ -d "$arg" ]; then
+    # If the argument is a directory, process all PDF files in it
+    find "$arg" -name '*.pdf' -print0 | while IFS= read -r -d '' pdf_file; do
+        python3 tests/test_accuracy.py "$pdf_file"
+    done
+  elif [ -f "$arg" ]; then
+    # If the argument is a file, process it directly
+    python3 tests/test_accuracy.py "$arg"
+  else
+    echo "Warning: Argument '$arg' is not a valid file or directory. Skipping." >&2
+  fi
 done

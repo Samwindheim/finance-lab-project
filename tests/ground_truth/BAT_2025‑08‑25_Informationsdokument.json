@@ -1,0 +1,44 @@
+{
+    "investors": [
+      {
+        "name": "Nazgero Consulting Services Ltd",
+        "commitment": {
+          "amount": 2794261.86,
+          "percent": 3.56
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "MJ Modén Förvaltning AB",
+        "commitment": {
+          "amount": 499999.86,
+          "percent": 0.64
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Jan-Olof Arnbom",
+        "commitment": {
+          "amount": 180000.0,
+          "percent": 0.23
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Eckhard Cordes",
+        "commitment": {
+          "amount": 119999.88,
+          "percent": 0.15
+        },
+        "investor_level": 0
+      },
+      {
+        "name": "Roberto García Martínez",
+        "commitment": {
+          "amount": 119999.88,
+          "percent": 0.15
+        },
+        "investor_level": 0
+      }
+    ]
+  }

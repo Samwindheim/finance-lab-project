@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from typing import Dict, Any, List
 from dotenv import load_dotenv
 
@@ -71,6 +72,7 @@ def main():
     4. Load the corresponding ground truth JSON file
     5. Compare actual vs expected results and report differences
     """
+    start_time = time.time()
     # Load environment variables from .env file (needed for OpenAI API key)
     load_dotenv()
     
@@ -162,15 +164,16 @@ def main():
                 print(f"    {line}")
     
     # Final verdict
+    duration = time.time() - start_time
     if total_errors == 0 and not mystery_investors_details:
-        print("\n--- TEST PASSED: All investor data matches the ground truth. ---")
+        print(f"\n--- TEST PASSED: All investor data matches the ground truth. ({duration:.2f}s) ---")
     else:
         report = []
         if total_errors > 0:
             report.append(f"{total_errors} mismatches")
         if mystery_investors_details:
             report.append(f"{len(mystery_investors_details)} mystery investors")
-        print(f"\n--- TEST FAILED: Found {' and '.join(report)}. ---")
+        print(f"\n--- TEST FAILED: Found {' and '.join(report)}. ({duration:.2f}s) ---")
 
 if __name__ == "__main__":
     main()
