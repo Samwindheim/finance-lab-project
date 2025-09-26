@@ -16,8 +16,14 @@ import os
 import json
 from openai import OpenAI
 from typing import Dict, Any, List
+import fitz
 
-from .pdf_parser import find_and_extract_tables_as_markdown, get_page_count
+from .pdf_parser import (
+    get_page_count,
+    find_pages_to_scan,
+    extract_tables_with_pymupdf,
+    extract_tables_with_camelot
+)
 
 LLM_MODEL = "gpt-5-mini"
 
@@ -58,7 +64,7 @@ def _calculate_confidence(investors: List[Dict[str, Any]]) -> str:
     return "medium" if has_medium_confidence else "high"
 
 
-def create_extraction_prompt(markdown_tables: str) -> str:
+def create_extraction_prompt(text_input: str) -> str:
     """
     Creates the prompt for the OpenAI API to convert a Markdown table to JSON.
     """
@@ -121,17 +127,17 @@ def create_extraction_prompt(markdown_tables: str) -> str:
 
     **Financial Data for Analysis:**
     ---
-    {markdown_tables}
+    {text_input}
     ---
     """
 
 
-def _extract_data_from_markdown(markdown: str) -> Dict[str, Any]:
+def _extract_data_from_markdown(text_input: str) -> Dict[str, Any]:
     """
     Uses OpenAI to convert a Markdown table string into structured investor data.
     """
     client = get_openai_client()
-    prompt = create_extraction_prompt(markdown)
+    prompt = create_extraction_prompt(text_input)
 
     try:
         response = client.chat.completions.create(
@@ -157,40 +163,89 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
     Orchestrates the two-stage process: find and extract tables, then convert them to JSON.
     """
     metrics = {}
+    investors = []
+    source_pages = []
+    extraction_method = "N/A"
+    combined_markdown = ""
 
-    # --- Stage 1: Fitz Table Scan ---
+    try:
+        doc = fitz.open(pdf_path)
+    except Exception as e:
+        print(f"Error opening PDF {pdf_path}: {e}")
+        return {"investors": [], "source_page": "", "confidence": "none"}
+
     scan_start_time = time.time()
-    markdown_tables = find_and_extract_tables_as_markdown(pdf_path, SEARCH_KEYWORDS)
-    metrics["scan_duration"] = time.time() - scan_start_time
+    pages_to_scan = find_pages_to_scan(doc, SEARCH_KEYWORDS)
 
-    if not markdown_tables:
+    if not pages_to_scan:
         if verbose:
             print("--- Efficiency Analysis ---")
             print(f"Total pages in document:        {get_page_count(pdf_path)}")
-            print(f"Fitz table scan duration:       {metrics['scan_duration']:.2f}s")
-            print("No relevant tables found.")
+            print("No candidate pages found based on keywords.")
             print("---------------------------")
+        doc.close()
         return {"investors": [], "source_page": "", "confidence": "none"}
 
-    combined_markdown = "\n\n".join(markdown_tables)
+    # --- Pass 1: Extract tables using PyMuPDF ---
+    markdown_tables = extract_tables_with_pymupdf(doc, pages_to_scan)
+    metrics["scan_duration_pymupdf"] = time.time() - scan_start_time
 
-    # Debug: Show the raw markdown that will be sent to AI
-    if debug:
-        print("=" * 80)
-        print("DEBUG: Markdown table(s) extracted by fitz (before AI processing)")
-        print("=" * 80)
-        print(combined_markdown)
-        print("=" * 80)
-        print(f"Total characters: {len(combined_markdown)}")
-        print("=" * 80)
+    if markdown_tables:
+        extraction_method = "PyMuPDF"
+        combined_markdown = "\n\n".join(markdown_tables)
 
-    # --- Stage 2: LLM Conversion ---
-    api_start_time = time.time()
-    extracted_data = _extract_data_from_markdown(combined_markdown)
-    metrics["api_call_duration"] = time.time() - api_start_time
+        if debug:
+            print("=" * 80)
+            print(f"DEBUG: Attempting LLM extraction with PyMuPDF output ({len(combined_markdown)} chars)")
+            print("=" * 80)
+            print(combined_markdown)
+            print("=" * 80)
 
-    investors = extracted_data.get("investors", [])
-    source_pages = extracted_data.get("source_pages", [])
+        api_start_time = time.time()
+        extracted_data = _extract_data_from_markdown(combined_markdown)
+        metrics["api_call_duration_pymupdf"] = time.time() - api_start_time
+        investors = extracted_data.get("investors", [])
+        source_pages = extracted_data.get("source_pages", [])
+
+    # --- Pass 2: Fallback to Camelot if no investors were found ---
+    if not investors:
+        if verbose and markdown_tables:
+            print("PyMuPDF found tables, but no investors were extracted. Falling back to Camelot.")
+
+        camelot_start_time = time.time()
+        markdown_tables = extract_tables_with_camelot(doc, pages_to_scan, pdf_path)
+        metrics["scan_duration_camelot"] = time.time() - camelot_start_time
+
+        if markdown_tables:
+            extraction_method = "Camelot"
+            combined_markdown = "\n\n".join(markdown_tables)
+
+            if debug:
+                print("=" * 80)
+                print(f"DEBUG: Attempting LLM extraction with Camelot fallback output ({len(combined_markdown)} chars)")
+                print("=" * 80)
+                print(combined_markdown)
+                print("=" * 80)
+
+            api_start_time = time.time()
+            extracted_data = _extract_data_from_markdown(combined_markdown)
+            metrics["api_call_duration_camelot"] = time.time() - api_start_time
+            investors = extracted_data.get("investors", [])
+            source_pages = extracted_data.get("source_pages", [])
+
+    doc.close()
+
+    if not investors:
+        if verbose:
+            print("--- Efficiency Analysis ---")
+            print(f"Total pages in document:        {get_page_count(pdf_path)}")
+            if "scan_duration_pymupdf" in metrics:
+                print(f"PyMuPDF scan duration:          {metrics['scan_duration_pymupdf']:.2f}s")
+            if "scan_duration_camelot" in metrics:
+                print(f"Camelot scan duration:          {metrics['scan_duration_camelot']:.2f}s")
+            print("No investors extracted after all attempts.")
+            print("---------------------------")
+        return {"investors": [], "source_page": "", "confidence": "none"}
 
     # Sort investors by investor level for consistent output
     investors.sort(key=lambda x: x.get("investor_level", 0))
@@ -199,9 +254,16 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
     if verbose:
         print("--- Efficiency Analysis ---")
         print(f"Total pages in document:        {get_page_count(pdf_path)}")
-        print(f"Fitz table scan duration:       {metrics['scan_duration']:.2f}s")
+        if "scan_duration_pymupdf" in metrics:
+            print(f"Fitz table scan duration:    {metrics['scan_duration_pymupdf']:.2f}s")
+        if "api_call_duration_pymupdf" in metrics:
+            print(f"LLM API call duration (Using Fitz text): {metrics.get('api_call_duration_pymupdf', 0):.2f}s")
+        if "scan_duration_camelot" in metrics:
+            print(f"Camelot table scan duration:    {metrics['scan_duration_camelot']:.2f}s")
+        if "api_call_duration_camelot" in metrics:
+            print(f"LLM API call duration (Using Camelot Text): {metrics.get('api_call_duration_camelot', 0):.2f}s")
+        print(f"Final pdf parsing method:        {extraction_method}")
         print(f"LLM payload character count:    {len(combined_markdown)}")
-        print(f"LLM API call duration:          {metrics['api_call_duration']:.2f}s")
         print("---------------------------")
 
     # Pydantic doesn't have a clean way to format a list of numbers, so do it manually

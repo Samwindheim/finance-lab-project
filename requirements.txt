@@ -3,3 +3,4 @@ openai
 pydantic
 python-dotenv
 pymupdf
+camelot-py[cv]
