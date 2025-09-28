@@ -5,7 +5,7 @@ It orchestrates the main two-stage RAG pipeline:
 1.  **Retrieval**: Invokes the `pdf_parser` to find and extract relevant tables
     from the source PDF, which are returned as clean Markdown.
 2.  **Generation**: Constructs a detailed prompt with specific mapping and cleaning
-    rules, then sends the Markdown table(s) to the OpenAI API (gpt-4o) to be
+    rules, then sends the Markdown table(s) to the OpenAI API (gpt-5-mini) to be
     converted into a structured JSON format.
 
 It also calculates a final confidence score based on the completeness of the
@@ -28,7 +28,7 @@ from .pdf_parser import (
 LLM_MODEL = "gpt-5-mini"
 
 SEARCH_KEYWORDS = [
-    "förbin", "garant", "SEK"
+    "förbin", "garant", "SEK", "Amount"
 ]
 
 def get_openai_client() -> OpenAI:
@@ -87,6 +87,7 @@ def create_extraction_prompt(text_input: str) -> str:
     - Guarantor (“Garantier”, “Botten-garantier”, or "Bottom-up garantiåtaganden" or similar) → level 1
     - “Toppgarantier” or "Top-down garantiåtaganden" or similar → level 2
     - If same person has multiple roles → create separate objects.
+    - If the level is not specified or ambiguous, default to `investor_level: 0`.
 
     **Data Cleaning:**
     - **Amount:**
@@ -107,6 +108,7 @@ def create_extraction_prompt(text_input: str) -> str:
     - Remove ending asterisk(s) from names (e.g., “Jim Joe*” → “Jim Joe”).
 
     - Important: Do not make up any data. It is important that there are no hallucinations.
+    - Make sure to not grab the wrong data from the wrong tables or pages.
 
     **Output Format Example:**
     ```json
@@ -246,6 +248,11 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
             print("No investors extracted after all attempts.")
             print("---------------------------")
         return {"investors": [], "source_page": "", "confidence": "none"}
+
+    # Post-process to ensure investor_level is always an integer
+    for investor in investors:
+        if investor.get("investor_level") is None:
+            investor["investor_level"] = 0  # Default to underwriter
 
     # Sort investors by investor level for consistent output
     investors.sort(key=lambda x: x.get("investor_level", 0))
