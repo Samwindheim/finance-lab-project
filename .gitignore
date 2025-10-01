@@ -6,3 +6,4 @@ __pycache__/
 .cursor
 instructions.md
 .DS_Store
+glue/

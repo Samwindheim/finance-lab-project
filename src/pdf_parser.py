@@ -31,6 +31,16 @@ def _format_page_content(page: fitz.Page, tables: List[str]) -> str:
     return page_content
 
 
+def _format_page_text_only(page: fitz.Page) -> str:
+    """Formats the extracted page content with plain text only (no tables)."""
+    page_num = page.number + 1
+    page_text = page.get_text("text", sort=True)
+
+    page_content = f"--- Page {page_num} ---\n"
+    page_content += f"**Page Text:**\n{page_text}\n"
+    return page_content
+
+
 def _extract_tables_with_camelot(pdf_path: str, page_num: int) -> List[List[List[Any]]]:
     """
     Fallback function to extract tables using Camelot-py for a single page.
@@ -79,12 +89,15 @@ def find_pages_to_scan(doc: fitz.Document, search_keywords: List[str]) -> Set[in
     including a context window of one page before and after.
     """
     candidate_pages_indices = set()
+    # First pass: find pages containing at least two of the search keywords.
+    # This is a high-confidence way to find relevant pages.
     for page in doc:
         text = page.get_text("text", sort=True).lower()
         found_kws = {kw for kw in search_keywords if kw.lower() in text}
         if len(found_kws) >= 2:
             candidate_pages_indices.add(page.number)
 
+    # If the first pass found no pages, fall back to a more lenient search.
     if not candidate_pages_indices:
         # Fallback to single keyword search
         for page in doc:
@@ -96,6 +109,7 @@ def find_pages_to_scan(doc: fitz.Document, search_keywords: List[str]) -> Set[in
         return set()
 
     # Create a context window of pages to scan for tables (before, during, after)
+    # This helps capture tables or context that might be on an adjacent page.
     pages_to_scan_for_tables = set()
     for page_idx in sorted(list(candidate_pages_indices)):
         if page_idx > 0:
@@ -133,6 +147,24 @@ def extract_tables_with_camelot(doc: fitz.Document, pages_to_scan: Set[int], pdf
             if page_tables_markdown:
                 found_tables.append(_format_page_content(page, page_tables_markdown))
     return found_tables
+
+
+def extract_text_only(doc: fitz.Document, pages_to_scan: Set[int]) -> List[str]:
+    """
+    Extracts plain text from a set of pages without attempting to parse tables.
+    
+    Args:
+        doc: A fitz.Document object.
+        pages_to_scan: A set of page indices to extract text from.
+    
+    Returns:
+        A list of strings, where each string contains the formatted text from a page.
+    """
+    found_text = []
+    for page_idx in sorted(list(pages_to_scan)):
+        page = doc[page_idx]
+        found_text.append(_format_page_text_only(page))
+    return found_text
 
 
 def get_page_count(pdf_path: str) -> int:

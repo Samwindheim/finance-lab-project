@@ -2,12 +2,13 @@
 
 ## Overview
 
-This project is a pipeline designed to extract information about underwriters and guarantors from financial PDF documents. It leverages a two-stage process involving precise, context-aware table extraction using `PyMuPDF` and advanced data structuring using OpenAI's `gpt-5-mini` model.
+This project is a pipeline designed to extract information about underwriters and guarantors from financial PDF documents. It leverages a two-stage process involving precise, context-aware data extraction (from tables or plain text) using `PyMuPDF` and advanced data structuring using OpenAI's `gpt-5-mini` model.
 
-The primary goal is to convert unstructured tables within PDFs into a clean, validated, and structured JSON format.
+The primary goal is to convert unstructured data—whether in tables or plain text—within PDFs into a clean, validated, and structured JSON format.
 
 ## Features
 
+- **Flexible Extraction Modes**: Can extract data from structured tables (default) or from plain paragraph text using the `--text` flag.
 - **High-Precision Table Extraction**: Scans PDFs to find relevant pages based on financial keywords and extracts tables with high fidelity.
 - **AI-Powered Data Structuring**: Uses `gpt-5-mini` to interpret Markdown tables and convert them into a structured JSON format based on a detailed set of rules.
 - **Data Validation**: Employs `Pydantic` models to ensure the final output is correctly typed and conforms to a predefined schema.
@@ -71,6 +72,7 @@ Run the extraction process using the provided shell script, passing the path to 
 -   `pdf_path` (Required): The file path to the PDF document.
 -   `--verbose`: (Optional) Prints an efficiency analysis report.
 -   `--debug`: (Optional) Prints the raw contextual data sent to the AI.
+-   `--text`: (Optional) Extracts data from plain paragraph text instead of tables.
 
 ## Testing for Accuracy
 
