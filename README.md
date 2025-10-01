@@ -12,7 +12,6 @@ The primary goal is to convert unstructured data—whether in tables or plain te
 - **High-Precision Table Extraction**: Scans PDFs to find relevant pages based on financial keywords and extracts tables with high fidelity.
 - **AI-Powered Data Structuring**: Uses `gpt-5-mini` to interpret Markdown tables and convert them into a structured JSON format based on a detailed set of rules.
 - **Data Validation**: Employs `Pydantic` models to ensure the final output is correctly typed and conforms to a predefined schema.
-- **Detailed Metadata**: Includes metadata in the output, such as the source file, page numbers, and a confidence score for the extraction.
 - **Efficiency Reporting**: A `--verbose` flag provides an analysis of processing times for both the local table scan and the AI API call.
 
 ## How It Works
@@ -73,6 +72,7 @@ Run the extraction process using the provided shell script, passing the path to 
 -   `--verbose`: (Optional) Prints an efficiency analysis report.
 -   `--debug`: (Optional) Prints the raw contextual data sent to the AI.
 -   `--text`: (Optional) Extracts data from plain paragraph text instead of tables.
+-   `--gridless`: (Optional) Uses Camelot for table extraction, suitable for tables without grid lines.
 
 ## Testing for Accuracy
 
@@ -97,8 +97,7 @@ The script outputs a JSON object to standard output. The structure is defined by
   "meta": {
     "source": "example.pdf",
     "extracted_at": "2025-09-13T12:00:00.000000Z",
-    "source_page": "2,3",
-    "confidence": "high"
+    "source_page": "2,3"
   },
   "investors": [
     {

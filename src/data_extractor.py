@@ -14,7 +14,7 @@ import time
 import os
 import json
 from openai import OpenAI
-from typing import Dict, Any, List
+from typing import Dict, Any
 import fitz
 
 from .pdf_parser import (
@@ -28,7 +28,7 @@ from .pdf_parser import (
 LLM_MODEL = "gpt-5-mini"
 
 SEARCH_KEYWORDS = [
-    "förbin", "garant", "SEK", "Amount", "%"
+    "förbin", "garant", "SEK", "totalt"
 ]
 
 def get_openai_client() -> OpenAI:
@@ -41,32 +41,6 @@ def get_openai_client() -> OpenAI:
     if not api_key:
         raise ValueError("OPENAI_API_KEY environment variable not set.")
     return OpenAI(api_key=api_key)
-
-
-def _calculate_confidence(investors: List[Dict[str, Any]]) -> str:
-    """
-    Calculates a confidence score based on the completeness of the extracted data.
-    """
-    if not investors:
-        return "none"
-
-    has_medium_confidence = False
-    for investor in investors:
-        commitment = investor.get("commitment", {})
-        amount = commitment.get("amount")
-        percent = commitment.get("percent")
-
-        # If an investor is missing both amount and percent, confidence is low.
-        if amount is None and percent is None:
-            return "low"  # Found an investor with no commitment data at all
-        
-        # If an investor is missing one of the two, mark for medium confidence.
-        if amount is None or percent is None:
-            has_medium_confidence = True
-
-    # If we found at least one investor with partial data, confidence is medium.
-    # Otherwise, all investors had full data, so confidence is high.
-    return "medium" if has_medium_confidence else "high"
 
 
 def create_extraction_prompt(text_input: str) -> str:
@@ -166,7 +140,7 @@ def _extract_data_from_markdown(text_input: str) -> Dict[str, Any]:
         return {}
 
 
-def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = False, mode: str = "tables") -> Dict[str, Any]:
+def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = False, mode: str = "tables", gridless: bool = False) -> Dict[str, Any]:
     """
     Orchestrates the two-stage process: find and extract tables/text, then convert them to JSON.
     
@@ -175,6 +149,7 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
         verbose: If True, prints a detailed efficiency analysis report.
         debug: If True, prints the raw extracted content before AI processing.
         mode: The extraction mode - either "tables" or "text".
+        gridless: If True, uses Camelot exclusively for table extraction.
     """
     metrics = {}
     investors = []
@@ -187,7 +162,7 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
         doc = fitz.open(pdf_path)
     except Exception as e:
         print(f"Error opening PDF {pdf_path}: {e}")
-        return {"investors": [], "source_page": "", "confidence": "none"}
+        return {"investors": [], "source_page": ""}
 
     scan_start_time = time.time()
     pages_to_scan = find_pages_to_scan(doc, SEARCH_KEYWORDS)
@@ -199,7 +174,7 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
             print("No candidate pages found based on keywords.")
             print("---------------------------")
         doc.close()
-        return {"investors": [], "source_page": "", "confidence": "none"}
+        return {"investors": [], "source_page": ""}
 
     # --- 2. Extract Data based on Mode (Text or Tables) ---
     # --- Mode: Plain Text Extraction (no table parsing) ---
@@ -226,32 +201,8 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
     
     # --- Mode: Table Extraction (default) ---
     else:
-        # --- Pass 1: Extract tables using PyMuPDF ---
-        markdown_tables = extract_tables_with_pymupdf(doc, pages_to_scan)
-        metrics["scan_duration_pymupdf"] = time.time() - scan_start_time
-
-        if markdown_tables:
-            extraction_method = "PyMuPDF"
-            combined_markdown = "\n\n".join(markdown_tables)
-
-            if debug:
-                print("=" * 80)
-                print(f"DEBUG: Attempting LLM extraction with PyMuPDF output ({len(combined_markdown)} chars)")
-                print("=" * 80)
-                print(combined_markdown)
-                print("=" * 80)
-
-            api_start_time = time.time()
-            extracted_data = _extract_data_from_markdown(combined_markdown)
-            metrics["api_call_duration_pymupdf"] = time.time() - api_start_time
-            investors = extracted_data.get("investors", [])
-            source_pages = extracted_data.get("source_pages", [])
-
-        # --- Pass 2: Fallback to Camelot if no investors were found ---
-        if not investors:
-            if verbose and markdown_tables:
-                print("PyMuPDF found tables, but no investors were extracted. Falling back to Camelot.")
-
+        # If --gridless is flagged, use Camelot only.
+        if gridless:
             camelot_start_time = time.time()
             markdown_tables = extract_tables_with_camelot(doc, pages_to_scan, pdf_path)
             metrics["scan_duration_camelot"] = time.time() - camelot_start_time
@@ -262,7 +213,7 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
 
                 if debug:
                     print("=" * 80)
-                    print(f"DEBUG: Attempting LLM extraction with Camelot fallback output ({len(combined_markdown)} chars)")
+                    print(f"DEBUG: Attempting LLM extraction with Camelot output ({len(combined_markdown)} chars)")
                     print("=" * 80)
                     print(combined_markdown)
                     print("=" * 80)
@@ -272,6 +223,55 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
                 metrics["api_call_duration_camelot"] = time.time() - api_start_time
                 investors = extracted_data.get("investors", [])
                 source_pages = extracted_data.get("source_pages", [])
+        
+        # Default behavior: Try PyMuPDF first, then fall back to Camelot.
+        else:
+            # --- Pass 1: Extract tables using PyMuPDF ---
+            markdown_tables = extract_tables_with_pymupdf(doc, pages_to_scan)
+            metrics["scan_duration_pymupdf"] = time.time() - scan_start_time
+
+            if markdown_tables:
+                extraction_method = "PyMuPDF"
+                combined_markdown = "\n\n".join(markdown_tables)
+
+                if debug:
+                    print("=" * 80)
+                    print(f"DEBUG: Attempting LLM extraction with PyMuPDF output ({len(combined_markdown)} chars)")
+                    print("=" * 80)
+                    print(combined_markdown)
+                    print("=" * 80)
+
+                api_start_time = time.time()
+                extracted_data = _extract_data_from_markdown(combined_markdown)
+                metrics["api_call_duration_pymupdf"] = time.time() - api_start_time
+                investors = extracted_data.get("investors", [])
+                source_pages = extracted_data.get("source_pages", [])
+
+            # --- Pass 2: Fallback to Camelot if no investors were found ---
+            if not investors:
+                if verbose and markdown_tables:
+                    print("PyMuPDF found tables, but no investors were extracted. Falling back to Camelot.")
+
+                camelot_start_time = time.time()
+                markdown_tables = extract_tables_with_camelot(doc, pages_to_scan, pdf_path)
+                metrics["scan_duration_camelot"] = time.time() - camelot_start_time
+
+                if markdown_tables:
+                    extraction_method = "Camelot"
+                    combined_markdown = "\n\n".join(markdown_tables)
+
+                    if debug:
+                        print("=" * 80)
+                        print(f"DEBUG: Attempting LLM extraction with Camelot fallback output ({len(combined_markdown)} chars)")
+                        print("=" * 80)
+                        print(combined_markdown)
+                        print("=" * 80)
+
+                    api_start_time = time.time()
+                    extracted_data = _extract_data_from_markdown(combined_markdown)
+                    metrics["api_call_duration_camelot"] = time.time() - api_start_time
+                    investors = extracted_data.get("investors", [])
+                    source_pages = extracted_data.get("source_pages", [])
 
     doc.close()
 
@@ -286,7 +286,7 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
                 print(f"Camelot scan duration:          {metrics['scan_duration_camelot']:.2f}s")
             print("No investors extracted after all attempts.")
             print("---------------------------")
-        return {"investors": [], "source_page": "", "confidence": "none"}
+        return {"investors": [], "source_page": ""}
 
     # Post-process to ensure investor_level is always an integer
     for investor in investors:
@@ -324,5 +324,4 @@ def extract_investor_data(pdf_path: str, verbose: bool = False, debug: bool = Fa
     return {
         "investors": investors,
         "source_page": page_str,
-        "confidence": _calculate_confidence(investors),
     }

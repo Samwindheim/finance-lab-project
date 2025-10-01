@@ -39,7 +39,6 @@ class Meta(BaseModel):
 
     extracted_at: datetime = Field(default_factory=datetime.now, description="The timestamp of the extraction.")
     source_page: Optional[Union[int, str]] = Field(None, description="The page number(s) where the information was found.")
-    confidence: Optional[str] = Field(None, description="The confidence level of the extraction (e.g., 'high', 'medium', 'low').")
 
 
 class ExtractionResult(BaseModel):

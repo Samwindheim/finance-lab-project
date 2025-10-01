@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Print a detailed efficiency analysis report.")
     parser.add_argument("--debug", action="store_true", help="Print the raw Markdown tables extracted by fitz before AI processing.")
     parser.add_argument("--text", action="store_true", help="Extract from plain paragraph text instead of tables.")
+    parser.add_argument("--gridless", action="store_true", help="Use Camelot for table extraction, suitable for tables without grid lines.")
     args = parser.parse_args()
 
     if not os.path.exists(args.pdf_path):
@@ -34,17 +35,17 @@ def main():
     # Extract the raw data using the core logic
     extraction_mode = "text" if args.text else "tables"
     extracted_data = extract_investor_data(
-        args.pdf_path, 
-        verbose=args.verbose, 
-        debug=args.debug, 
-        mode=extraction_mode
+        args.pdf_path,
+        verbose=args.verbose,
+        debug=args.debug,
+        mode=extraction_mode,
+        gridless=args.gridless
     )
 
     # Create the metadata object
     meta_info = Meta(
         source=os.path.basename(args.pdf_path),
         source_page=extracted_data.get("source_page"),
-        confidence=extracted_data.get("confidence"),
     )
 
     # Combine meta and investor data and validate with Pydantic
